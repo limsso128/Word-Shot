@@ -1,15 +1,20 @@
 import pygame
 
 # 화면 설정
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 500
+SCREEN_HEIGHT = 700
 
 # 색상 정의
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
-BLUE = (0, 0, 255)
+
+# 파스텔톤 색상
+PASTEL_PINK = (255, 204, 204) # 적
+PASTEL_YELLOW = (255, 255, 204) # 총알
+PASTEL_BLUE = (173, 216, 230) # 플레이어
+MINT = (189, 252, 201) # 버튼
+
+BG_COLOR = (10, 20, 40) # 어두운 남색 배경
 
 # --- 폰트 자동 찾기 설정 ---
 pygame.init()
