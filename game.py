@@ -12,13 +12,23 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-        # 배경 이미지 불러오기
+        # 1. 프레임 이미지 불러오기 (전체 배경)
         try:
-            self.background_image = pygame.image.load("img/gameframe.png").convert()
-            self.background_image = pygame.transform.scale(self.background_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+            self.frame_image = pygame.image.load("img/frame.png").convert()
+            self.frame_image = pygame.transform.scale(self.frame_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
         except FileNotFoundError:
-            print("경고: 'gameframe.jpg' 파일을 찾을 수 없습니다. 검은색 배경으로 실행됩니다.")
-            self.background_image = None  # 배경이 없어도 실행은 되도록
+            print("경고: 'img/frame.jpg' 파일을 찾을 수 없습니다. 검은색 배경으로 실행됩니다.")
+            self.frame_image = None  # 프레임이 없어도 실행은 되도록
+
+        # 2. 게임 영역 배경 이미지 불러오기 (프레임 안에 들어갈 배경)
+        try:
+            self.game_background_image = pygame.image.load("img/background.jpg").convert()
+            # PLAY_AREA_RECT 크기에 맞게 스케일링
+            self.game_background_image = pygame.transform.scale(self.game_background_image,
+                                                                (PLAY_AREA_RECT.width, PLAY_AREA_RECT.height))
+        except FileNotFoundError:
+            print("경고: 'img/background.png' 파일을 찾을 수 없습니다. 게임 영역이 검은색으로 표시됩니다.")
+            self.game_background_image = None  # 게임 배경이 없어도 실행
 
         # 키 반복 기능 활성화
         pygame.key.set_repeat(500, 30)
@@ -152,18 +162,30 @@ class Game:
                     break
 
     def draw(self):
-        # 배경 이미지 그리기
-        if self.background_image:
-            self.screen.blit(self.background_image, (0, 0))
-        else:
-            self.screen.fill(BLACK)  # 이미지가 없을 경우 검은색 배경
+        # 1. 기본 검은색 배경
+        self.screen.fill(BLACK)
 
+        # 2. 프레임 이미지 그리기 (game machine)
+        if self.frame_image:
+            self.screen.blit(self.frame_image, (0, 0))
+
+        # 3. 게임 영역 배경 그리기 (background.png)
+        if self.game_background_image:
+            # PLAY_AREA_RECT의 위치에 게임 배경을 그림
+            self.screen.blit(self.game_background_image, (PLAY_AREA_RECT.left, PLAY_AREA_RECT.top))
+        else:
+            # 게임 배경 이미지가 없으면, 해당 영역만 검은색으로 칠함
+            pygame.draw.rect(self.screen, BLACK, PLAY_AREA_RECT)
+
+        # 4. 현재 게임 상태에 맞는 화면 그리기 (게임 요소, UI 등)
+        #    (이 함수들은 프레임과 게임배경 위에 덧그려짐)
         if self.game_state == "START":
             self.draw_start_screen()
         elif self.game_state == "PLAYING":
             self.draw_playing_screen()
         elif self.game_state == "GAME_OVER":
             self.draw_game_over_screen()
+
         pygame.display.flip()
 
     def draw_start_screen(self):
