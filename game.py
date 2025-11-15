@@ -7,6 +7,42 @@ from enemy import Enemy
 from bullet import Bullet
 
 
+# --- [새로 추가] 폭발 효과 클래스 ---
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, center):  # 'center'는 폭발이 일어날 (x, y) 중심 좌표
+        super().__init__()
+
+        try:
+            # 말씀하신 'Character_Death.png' 이미지를 로드합니다.
+            self.image = pygame.image.load("img/Character_Death.png").convert_alpha()
+            # 폭발 이미지 크기를 40x40으로 조절 (적 크기보다 약간 크게)
+            self.image = pygame.transform.scale(self.image, (40, 40))
+        except FileNotFoundError:
+            print("경고: 'img/Character_Death.png' 파일을 찾을 수 없습니다. 주황색 원으로 대체합니다.")
+            # 이미지가 없을 경우를 대비한 주황색 원
+            self.image = pygame.Surface((40, 40), pygame.SRCALPHA)  # 투명 배경
+            pygame.draw.circle(self.image, (255, 100, 0), (20, 20), 20)  # 주황색 원
+
+        self.rect = self.image.get_rect(center=center)
+
+        # 폭발 효과 타이머
+        self.spawn_time = pygame.time.get_ticks()  # 생성된 시간 (밀리초)
+        self.duration = 200  # 200 밀리초 (0.2초) 동안 보임
+
+    def update(self):
+        # 현재 시간이 생성 시간 + 지속 시간보다 지났는지 확인
+        now = pygame.time.get_ticks()
+        if now - self.spawn_time > self.duration:
+            return False  # False를 반환하여 자신을 제거하라는 신호를 보냄
+        return True  # True를 반환하여 아직 살아있음을 알림
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
+
+# ------------------------------------
+
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -41,10 +77,9 @@ class Game:
         except FileNotFoundError:
             print("경고: 'img/startBtn.png' 파일을 찾을 수 없습니다.")
 
-        # --- 버튼 클릭 영역(Rect)을 __init__에서 미리 생성 ---
         if self.start_button_image:
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 80)
             )
         else:
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)
@@ -73,6 +108,7 @@ class Game:
         self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
         self.enemies = []
+        self.explosions = []  # [수정] 폭발 효과 리스트 초기화
         self.bullet_count = 0
         self.user_input = ""
         self.current_saja = random.choice(self.saja_list)
@@ -165,13 +201,32 @@ class Game:
             self.game_state = "GAME_OVER"
             pygame.key.stop_text_input()
 
+        # --- 충돌 감지 및 폭발 효과 생성 ---
+        bullets_to_remove = []
+        enemies_to_remove = []
+
         for bullet in self.bullets:
             for enemy in self.enemies:
+                if bullet in bullets_to_remove or enemy in enemies_to_remove:
+                    continue
+
                 if bullet.rect.colliderect(enemy.rect.inflate(10, 10)):
-                    self.bullets.remove(bullet)
-                    self.enemies.remove(enemy)
+                    bullets_to_remove.append(bullet)
+                    enemies_to_remove.append(enemy)
+
+                    self.explosions.append(Explosion(enemy.rect.center))
                     self.score += 10
                     break
+
+        for bullet in bullets_to_remove:
+            self.bullets.remove(bullet)
+        for enemy in enemies_to_remove:
+            self.enemies.remove(enemy)
+
+        # 폭발 효과 업데이트 및 제거
+        for explosion in self.explosions[::]:
+            if not explosion.update():
+                self.explosions.remove(explosion)
 
     def draw(self):
         self.screen.fill(BLACK)
@@ -216,12 +271,15 @@ class Game:
             if enemy.rect.colliderect(PLAY_AREA_RECT):
                 enemy.draw(self.screen)
 
+        for explosion in self.explosions:
+            explosion.draw(self.screen)
+
         saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, WHITE)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
 
         meaning_text = FONT_SMALL.render(self.current_saja['meaning'], True, WHITE)
-        meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)  # <-- 오타 수정됨
+        meaning_rect = meaning_text.get_rect(center=SAJA_MEANING_POS)
         self.screen.blit(meaning_text, meaning_rect)
 
         input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
@@ -252,6 +310,10 @@ class Game:
         self.screen.blit(final_score_text, final_score_rect)
 
         correct_list_text = FONT_SMALL.render("맞춘 사자성어:", True, PASTEL_YELLOW)
+
+        #
+        # [오타 수정] final_score_text.bottom -> final_score_rect.bottom
+        #
         correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
         self.screen.blit(correct_list_text, correct_list_rect)
 

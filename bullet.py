@@ -12,7 +12,7 @@ class Bullet(pygame.sprite.Sprite):
             original_image = pygame.image.load("img/bullet.png").convert_alpha()
 
             # 이미지 비율 유지하면서 너비 10픽셀로 조정
-            self.image_width = 10
+            self.image_width = 30
             self.image_height = int(original_image.get_height() * (self.image_width / original_image.get_width()))
             self.image = pygame.transform.scale(original_image, (self.image_width, self.image_height))
         except FileNotFoundError:

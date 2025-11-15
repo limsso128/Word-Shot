@@ -14,7 +14,7 @@ class Player(pygame.sprite.Sprite):
             original_image = pygame.image.load("img/character.png").convert_alpha()
 
             # 이미지 비율 유지하면서 너비 40픽셀로 조정
-            self.image_width = 40
+            self.image_width = 60
             self.image_height = int(original_image.get_height() * (self.image_width / original_image.get_width()))
             self.image = pygame.transform.scale(original_image, (self.image_width, self.image_height))
         except FileNotFoundError:
