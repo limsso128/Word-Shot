@@ -3,9 +3,9 @@ import os
 
 # !!! 중요 !!!
 #
-#    가지고 계신 'frame.jpg' 파일의
-#    [실제 너비]와 [실제 높이]로 아래 두 값을 꼭 수정해주세요.
-#    (현재는 540x960 이미지라고 가정하고 작성되었습니다.)
+#    'frame.jpg'를 더 이상 사용하지 않으므로,
+#    아래 값은 게임 윈도우의 전체 크기가 됩니다.
+#    (기존 파일의 값을 그대로 유지합니다.)
 #
 # !!! 중요 !!!
 SCREEN_WIDTH = 375
@@ -13,12 +13,9 @@ SCREEN_HEIGHT = 666
 
 # -----------------------------------------------------------------
 
-# 'frame.jpg' 이미지 안에서 'background.png'가 그려질 영역이자,
-# 실제 게임이 실행될 영역 (적, 플레이어, 총알이 움직이는 곳)
-# 이 값은 (540, 960) 화면 크기를 기준으로 추정한 값입니다.
-# 'frame.jpg'와 'background.png'에 맞게 이 값을 조절해야 합니다.
+# 'PLAY_AREA_RECT'는 더 이상 사용하지 않으므로 삭제합니다.
 # (x시작, y시작, 너비, 높이)
-PLAY_AREA_RECT = pygame.Rect(45, 230, 450, 470)
+# PLAY_AREA_RECT = pygame.Rect(45, 230, 450, 470) # <--- 이 줄 삭제
 
 # 색상 정의
 WHITE = (255, 255, 255)
@@ -33,14 +30,14 @@ MINT = (189, 252, 201) # 버튼
 # BG_COLOR는 이제 사용하지 않습니다. (배경 이미지 사용)
 
 # --- 새 GUI 위치 정의 (화면 전체 기준) ---
-# gameframe.jpg의 기존 UI 위에 덮어씌울 위치 (540x960 기준)
-SCORE_POS = (450, 140)     # 점수 (프레임의 '380' 숫자 위치)
-LIVES_POS = (330, 140)     # 목숨 (프레임의 'Lv. 99+' 위치)
+# 프레임이 없으므로 화면 기준으로 위치를 새로 잡습니다.
+SCORE_POS = (SCREEN_WIDTH - 60, 30)     # 점수 (화면 우측 상단)
+LIVES_POS = (60, 30)                    # 목숨 (화면 좌측 상단)
 
-# 하단 입력창 및 사자성어 위치 (540x960 기준)
-SAJA_MEANING_POS = (SCREEN_WIDTH // 2, 745)  # 사자성어 뜻 (중앙 정렬)
-SAJA_WORD_POS = (SCREEN_WIDTH // 2, 785)     # 사자성어 단어 (중앙 정렬)
-INPUT_BOX_Y = 830                            # 사용자 입력창 Y 위치 (하단)
+# 하단 입력창 및 사자성어 위치 (화면 하단 기준)
+SAJA_MEANING_POS = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100)  # 사자성어 뜻 (중앙 정렬)
+SAJA_WORD_POS = (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 70)     # 사자성어 단어 (중앙 정렬)
+INPUT_BOX_Y = SCREEN_HEIGHT - 30                            # 사용자 입력창 Y 위치 (하단)
 
 
 # --- 폰트 설정 ---
@@ -61,7 +58,7 @@ FONT_PATH = find_font()
 try:
     if FONT_PATH is None:
         raise FileNotFoundError # 폰트 파일이 없으면 에러 발생
-    # 프레임에 맞게 폰트 크기 미세 조정
+    # 폰트 크기 (기존과 동일)
     FONT_LARGE = pygame.font.Font(FONT_PATH, 60)
     FONT_MEDIUM = pygame.font.Font(FONT_PATH, 30)
     FONT_SMALL = pygame.font.Font(FONT_PATH, 22)
