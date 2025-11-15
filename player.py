@@ -10,26 +10,20 @@ class Player(pygame.sprite.Sprite):
 
         # [수정] 플레이어 이미지 로드
         try:
-            # [수정] .png 파일이므로 .convert_alpha() 사용 (투명도 지원)
+            # .png 파일이므로 .convert_alpha() 사용 (투명도 지원)
             original_image = pygame.image.load("img/character.png").convert_alpha()
 
             # 이미지 비율 유지하면서 너비 40픽셀로 조정
-            self.image_width = 60
+            self.image_width = 70
             self.image_height = int(original_image.get_height() * (self.image_width / original_image.get_width()))
             self.image = pygame.transform.scale(original_image, (self.image_width, self.image_height))
         except FileNotFoundError:
-            # [수정] 오류 메시지도 .png로 변경
             print("경고: 'img/character.png' 파일을 찾을 수 없습니다. 기본 파스텔 블루 사각형으로 실행됩니다.")
             self.image = pygame.Surface([40, 10])  # 기본 사각형 크기
             self.image.fill(PASTEL_BLUE)
 
-            # (투명도 없는 사각형이므로 .convert()는 여기서 괜찮습니다)
-            # 만약 사각형도 투명하게 하려면 아래 2줄 주석 해제
-            # self.image.set_colorkey(BLACK) # 검은색을 투명으로
-            # self.image = self.image.convert_alpha()
-
         self.rect = self.image.get_rect()
-        self.reset(play_area_rect)  # 초기 위치 설정
+        self.reset(play_area_rect)  # 초기 위치 설정 (아래 reset 함수 호출)
 
         self.speed = 5  # 플레이어 이동 속도
 
@@ -37,7 +31,12 @@ class Player(pygame.sprite.Sprite):
         self.play_area_rect = play_area_rect
         # 플레이어를 게임 영역의 중앙 하단에 위치
         self.rect.centerx = self.play_area_rect.centerx
-        self.rect.bottom = self.play_area_rect.bottom - 5  # 바닥에서 약간 위로
+
+        #
+        # [수정] Y 위치: 5픽셀 틈 제거, 맨 밑으로
+        #
+        self.rect.bottom = self.play_area_rect.bottom
+        # (기존 코드: self.play_area_rect.bottom - 5)
 
     def update(self):
         # 키 입력 처리

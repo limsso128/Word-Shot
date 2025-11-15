@@ -8,29 +8,33 @@ SCREEN_HEIGHT = 666
 # 실제 게임 화면 영역 (수정 X)
 PLAY_AREA_RECT = pygame.Rect(82, 111, 241, 329)
 
-# 색상 정의
+# 색상 정의 (수정 X)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
-# --- [수정] ---
 DEEP_PINK = (200, 80, 120)  # 사자성어(단어)용
 MEDIUM_GRAY = (100, 100, 100)  # 사자성어(뜻)용
 MUSTARD = (220, 180, 0)  # 사용자 입력용 (진한 노랑)
-# --------------------
-
-# 파스텔톤 색상
 PASTEL_PINK = (255, 204, 204)  # 적
 PASTEL_YELLOW = (255, 255, 204)  # 총알
 PASTEL_BLUE = (173, 216, 230)  # 플레이어
 MINT = (189, 252, 201)  # 버튼
 
-# --- UI 위치 정의 (수정 없음) ---
+# --- [수정] UI 위치 정의 (10px씩 아래로) ---
+
+# [유지] 점수 (게임 영역 좌측 상단)
 SCORE_POS = (PLAY_AREA_RECT.left + 20, PLAY_AREA_RECT.top + 15)
+# [유지] 목숨 (게임 영역 우측 상단)
 LIVES_POS = (PLAY_AREA_RECT.right - 80, PLAY_AREA_RECT.top + 15)
-INPUT_BOX_Y = PLAY_AREA_RECT.bottom - 40
-SAJA_MEANING_Y = PLAY_AREA_RECT.bottom - 65
-SAJA_WORD_Y = PLAY_AREA_RECT.bottom - 85
+
+# [수정] 하단 입력창 및 사자성어 위치 (10px 아래로)
+# Y 위치
+INPUT_BOX_Y = PLAY_AREA_RECT.bottom - 30  # 입력창 Y (40 -> 30)
+SAJA_MEANING_Y = PLAY_AREA_RECT.bottom - 55  # 사자성어 뜻 Y (65 -> 55)
+SAJA_WORD_Y = PLAY_AREA_RECT.bottom - 75  # 사자성어 단어 Y (85 -> 75)
+# X 위치 (게임 영역 중앙)
 UI_CENTER_X = PLAY_AREA_RECT.centerx
+
+# (X, Y) 튜플로 최종 정의
 SAJA_MEANING_POS = (UI_CENTER_X, SAJA_MEANING_Y)
 SAJA_WORD_POS = (UI_CENTER_X, SAJA_WORD_Y)
 
