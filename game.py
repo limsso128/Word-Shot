@@ -5,36 +5,30 @@ from settings import *
 from player import Player
 from enemy import Enemy
 from bullet import Bullet
+from heart import Heart  # heart.py에서 Heart 클래스 가져오기
 
 
-# --- [새로 추가] 폭발 효과 클래스 ---
+# --- 폭발 효과 클래스 (수정 없음) ---
 class Explosion(pygame.sprite.Sprite):
-    def __init__(self, center):  # 'center'는 폭발이 일어날 (x, y) 중심 좌표
+    def __init__(self, center):
         super().__init__()
-
         try:
-            # 말씀하신 'Character_Death.png' 이미지를 로드합니다.
             self.image = pygame.image.load("img/Character_Death.png").convert_alpha()
-            # 폭발 이미지 크기를 40x40으로 조절 (적 크기보다 약간 크게)
             self.image = pygame.transform.scale(self.image, (40, 40))
         except FileNotFoundError:
             print("경고: 'img/Character_Death.png' 파일을 찾을 수 없습니다. 주황색 원으로 대체합니다.")
-            # 이미지가 없을 경우를 대비한 주황색 원
-            self.image = pygame.Surface((40, 40), pygame.SRCALPHA)  # 투명 배경
-            pygame.draw.circle(self.image, (255, 100, 0), (20, 20), 20)  # 주황색 원
+            self.image = pygame.Surface((40, 40), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 100, 0), (20, 20), 20)
 
         self.rect = self.image.get_rect(center=center)
-
-        # 폭발 효과 타이머
-        self.spawn_time = pygame.time.get_ticks()  # 생성된 시간 (밀리초)
-        self.duration = 200  # 200 밀리초 (0.2초) 동안 보임
+        self.spawn_time = pygame.time.get_ticks()
+        self.duration = 200
 
     def update(self):
-        # 현재 시간이 생성 시간 + 지속 시간보다 지났는지 확인
         now = pygame.time.get_ticks()
         if now - self.spawn_time > self.duration:
-            return False  # False를 반환하여 자신을 제거하라는 신호를 보냄
-        return True  # True를 반환하여 아직 살아있음을 알림
+            return False
+        return True
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -57,10 +51,9 @@ class Game:
             print("경고: 'img/background.png' 파일을 찾을 수 없습니다.")
             self.game_background_image = None
 
-        # --- 시작 화면 이미지 로드 ---
+        # --- 시작 화면 이미지 로드 (수정 없음) ---
         self.logo_image = None
         self.start_button_image = None
-
         try:
             self.logo_image = pygame.image.load("img/logo.png").convert_alpha()
             logo_width = int(PLAY_AREA_RECT.width * 0.8)
@@ -79,11 +72,19 @@ class Game:
 
         if self.start_button_image:
             self.start_button_rect = self.start_button_image.get_rect(
-                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 80)
+                center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
             )
         else:
             self.start_button_rect = pygame.Rect(0, 0, 150, 40)
             self.start_button_rect.center = (PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery + 30)
+
+        # --- 목숨(UI)용 하트 이미지 로드 (수정 없음) ---
+        self.heart_ui_image = None
+        try:
+            self.heart_ui_image = pygame.image.load("img/heart.png").convert_alpha()
+            self.heart_ui_image = pygame.transform.scale(self.heart_ui_image, (20, 20))  # UI용은 20x20
+        except FileNotFoundError:
+            print("경고: 'img/heart.png' (UI용) 파일을 찾을 수 없습니다. 텍스트로 대체합니다.")
 
         pygame.key.set_repeat(500, 30)
         pygame.display.set_caption("WordShot")
@@ -108,7 +109,8 @@ class Game:
         self.player.reset(PLAY_AREA_RECT)
         self.bullets = []
         self.enemies = []
-        self.explosions = []  # [수정] 폭발 효과 리스트 초기화
+        self.explosions = []
+        self.hearts = []
         self.bullet_count = 0
         self.user_input = ""
         self.current_saja = random.choice(self.saja_list)
@@ -117,6 +119,8 @@ class Game:
         self.lives = 3
         self.last_enemy_spawn_time = time.time()
         self.enemy_spawn_interval = 4.0
+        self.last_heart_spawn_time = time.time()
+        self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
     def run(self):
         while self.running:
@@ -170,6 +174,7 @@ class Game:
             self.user_input = ""
 
     def update(self):
+        # '게임 중'일 때만 update 로직 실행
         if self.game_state != "PLAYING":
             return
 
@@ -181,15 +186,20 @@ class Game:
                 self.bullets.remove(bullet)
 
         current_time = time.time()
+
         if current_time - self.last_enemy_spawn_time > self.enemy_spawn_interval:
             self.enemies.append(Enemy(PLAY_AREA_RECT))
             self.last_enemy_spawn_time = current_time
-
             if self.score > 50 and self.enemy_spawn_interval > 2.0:
                 self.enemy_spawn_interval -= 0.1
             elif self.score > 100 and self.enemy_spawn_interval > 1.5:
                 self.enemy_spawn_interval -= 0.1
             self.enemy_spawn_interval = max(self.enemy_spawn_interval, 1.0)
+
+        if current_time - self.last_heart_spawn_time > self.heart_spawn_interval:
+            self.hearts.append(Heart(PLAY_AREA_RECT))
+            self.last_heart_spawn_time = current_time
+            self.heart_spawn_interval = random.uniform(10.0, 20.0)
 
         for enemy in self.enemies:
             enemy.update()
@@ -197,54 +207,112 @@ class Game:
                 self.enemies.remove(enemy)
                 self.lives -= 1
 
+        for heart in self.hearts[::]:
+            heart.update()
+            if heart.rect.top > PLAY_AREA_RECT.bottom:
+                self.hearts.remove(heart)
+
         if self.lives <= 0:
             self.game_state = "GAME_OVER"
             pygame.key.stop_text_input()
 
-        # --- 충돌 감지 및 폭발 효과 생성 ---
+        # --- 충돌 감지 로직 (수정 없음) ---
         bullets_to_remove = []
         enemies_to_remove = []
+        hearts_to_remove = []
 
         for bullet in self.bullets:
-            for enemy in self.enemies:
-                if bullet in bullets_to_remove or enemy in enemies_to_remove:
-                    continue
+            if bullet in bullets_to_remove: continue
+            for heart in self.hearts:
+                if heart in hearts_to_remove: continue
+                if bullet.rect.colliderect(heart.rect):
+                    bullets_to_remove.append(bullet)
+                    hearts_to_remove.append(heart)
+                    if self.lives < 3:
+                        self.lives += 1
+                    break
 
+        for bullet in self.bullets:
+            if bullet in bullets_to_remove: continue
+            for enemy in self.enemies:
+                if enemy in enemies_to_remove: continue
                 if bullet.rect.colliderect(enemy.rect.inflate(10, 10)):
                     bullets_to_remove.append(bullet)
                     enemies_to_remove.append(enemy)
-
                     self.explosions.append(Explosion(enemy.rect.center))
                     self.score += 10
                     break
 
-        for bullet in bullets_to_remove:
+        for bullet in list(set(bullets_to_remove)):
             self.bullets.remove(bullet)
-        for enemy in enemies_to_remove:
+        for heart in list(set(hearts_to_remove)):
+            self.hearts.remove(heart)
+        for enemy in list(set(enemies_to_remove)):
             self.enemies.remove(enemy)
 
-        # 폭발 효과 업데이트 및 제거
         for explosion in self.explosions[::]:
             if not explosion.update():
                 self.explosions.remove(explosion)
 
+    # --- 점수와 목숨을 그리는 전용 함수 (수정 없음) ---
+    def draw_main_ui(self):
+        # 1. 점수 그리기 (settings.py의 SCORE_POS - 좌측 상단)
+        score_text = FONT_GUI.render(f"{self.score}", True, WHITE)
+        score_rect = score_text.get_rect(center=SCORE_POS)
+        self.screen.blit(score_text, score_rect)
+
+        # 2. 목숨 (heart.png 이미지로 그리기)
+        if self.heart_ui_image:
+            # settings.py의 LIVES_POS (우측 상단) 위치에서 그리기 시작
+            start_x = LIVES_POS[0]
+            start_y = LIVES_POS[1]
+            heart_width = self.heart_ui_image.get_width()
+            heart_padding = 5  # 하트 사이 간격
+
+            for i in range(self.lives):
+                x_pos = start_x + (i * (heart_width + heart_padding))
+                y_pos = start_y - self.heart_ui_image.get_height() // 2
+                self.screen.blit(self.heart_ui_image, (x_pos, y_pos))
+        else:
+            # (대체) 이미지 로드 실패 시 텍스트로 표시
+            lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, WHITE)
+            lives_rect = lives_text.get_rect(center=LIVES_POS)
+            self.screen.blit(lives_text, lives_rect)
+
+    # --------------------------------------------------
+
+    # --- [수정] draw 함수: 메인 UI를 'PLAYING'과 'GAME_OVER'에서만 그리도록 변경 ---
     def draw(self):
+        # 1. 배경 그리기
         self.screen.fill(BLACK)
         if self.game_background_image:
             self.screen.blit(self.game_background_image, (0, 0))
         else:
             pygame.draw.rect(self.screen, BLACK, PLAY_AREA_RECT)
 
+        # 2. 게임 상태에 맞는 화면 그리기
         if self.game_state == "START":
             self.draw_start_screen()
+
         elif self.game_state == "PLAYING":
             self.draw_playing_screen()
+            # [수정] '게임 중'일 때만 메인 UI 그리기
+            self.draw_main_ui()
+
         elif self.game_state == "GAME_OVER":
             self.draw_game_over_screen()
+            # [수정] '게임 오버'일 때만 메인 UI 그리기
+            self.draw_main_ui()
 
+        # 3. [수정] '항상' 그리던 UI 호출을 위로 옮기고, 'START'에선 제외함
+
+        # 4. 화면 최종 업데이트
         pygame.display.flip()
 
+    # --------------------------------------------------
+
     def draw_start_screen(self):
+        # (수정 없음)
         if self.logo_image:
             logo_rect = self.logo_image.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.centery - 40))
             self.screen.blit(self.logo_image, logo_rect)
@@ -262,6 +330,8 @@ class Game:
             self.screen.blit(start_text, start_text_rect)
 
     def draw_playing_screen(self):
+        # (수정 없음)
+        # 1. 게임 요소 그리기
         self.player.draw(self.screen)
 
         for bullet in self.bullets:
@@ -270,10 +340,13 @@ class Game:
         for enemy in self.enemies:
             if enemy.rect.colliderect(PLAY_AREA_RECT):
                 enemy.draw(self.screen)
-
+        for heart in self.hearts:
+            if heart.rect.colliderect(PLAY_AREA_RECT):
+                heart.draw(self.screen)
         for explosion in self.explosions:
             explosion.draw(self.screen)
 
+        # 2. 게임 영역 UI 그리기 (사자성어, 입력창)
         saja_text = FONT_MEDIUM.render(self.current_saja['word'], True, WHITE)
         saja_rect = saja_text.get_rect(center=SAJA_WORD_POS)
         self.screen.blit(saja_text, saja_rect)
@@ -284,23 +357,14 @@ class Game:
 
         input_text = FONT_MEDIUM.render(self.user_input, True, PASTEL_YELLOW)
         underline_width = max(100, input_text.get_width() + 10)
-
         underline_pos_start = (UI_CENTER_X - underline_width // 2, INPUT_BOX_Y + 5)
         underline_pos_end = (UI_CENTER_X + underline_width // 2, INPUT_BOX_Y + 5)
         pygame.draw.line(self.screen, PASTEL_YELLOW, underline_pos_start, underline_pos_end, 2)
-
         input_rect = input_text.get_rect(midbottom=(UI_CENTER_X, INPUT_BOX_Y))
         self.screen.blit(input_text, input_rect)
 
-        score_text = FONT_GUI.render(f"{self.score}", True, WHITE)
-        score_rect = score_text.get_rect(center=SCORE_POS)
-        self.screen.blit(score_text, score_rect)
-
-        lives_text = FONT_GUI.render(f"LIVES: {self.lives}", True, WHITE)
-        lives_rect = lives_text.get_rect(center=LIVES_POS)
-        self.screen.blit(lives_text, lives_rect)
-
     def draw_game_over_screen(self):
+        # (수정 없음)
         game_over_text = FONT_LARGE.render("게임 오버", True, PASTEL_PINK)
         game_over_rect = game_over_text.get_rect(center=(PLAY_AREA_RECT.centerx, PLAY_AREA_RECT.top + 40))
         self.screen.blit(game_over_text, game_over_rect)
@@ -310,10 +374,6 @@ class Game:
         self.screen.blit(final_score_text, final_score_rect)
 
         correct_list_text = FONT_SMALL.render("맞춘 사자성어:", True, PASTEL_YELLOW)
-
-        #
-        # [오타 수정] final_score_text.bottom -> final_score_rect.bottom
-        #
         correct_list_rect = correct_list_text.get_rect(center=(PLAY_AREA_RECT.centerx, final_score_rect.bottom + 30))
         self.screen.blit(correct_list_text, correct_list_rect)
 
